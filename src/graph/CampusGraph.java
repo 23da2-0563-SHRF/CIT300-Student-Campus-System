@@ -82,6 +82,75 @@ public class CampusGraph {
         }
     }
 
+    /** Removes a location and every route that refers to it. */
+    public void removeLocation(String location) {
+        Vertex target = findVertex(location);
+        if (target == null) {
+            System.out.println("Cannot remove location: the location was not found.");
+            return;
+        }
+
+        // Remove incoming adjacency entries, including a possible self-loop.
+        for (Vertex vertex = head; vertex != null; vertex = vertex.next) {
+            removeEdge(vertex, target);
+        }
+
+        Vertex previous = null;
+        Vertex current = head;
+        while (current != target) {
+            previous = current;
+            current = current.next;
+        }
+        if (previous == null) {
+            head = target.next;
+        } else {
+            previous.next = target.next;
+        }
+        if (tail == target) {
+            tail = previous;
+        }
+    }
+
+    /** Removes an undirected route; both locations must already exist. */
+    public void removeConnection(String source, String destination) {
+        Vertex from = findVertex(source);
+        Vertex to = findVertex(destination);
+        if (from == null || to == null) {
+            System.out.println("Cannot remove route: both locations must exist.");
+            return;
+        }
+        if (!removeEdge(from, to)) {
+            System.out.println("Cannot remove route: the route was not found.");
+            return;
+        }
+        // A self-loop has only one adjacency entry.
+        if (from != to) {
+            removeEdge(to, from);
+        }
+    }
+
+    /** Unlinks one adjacency entry and maintains the tail used by appendEdge. */
+    private boolean removeEdge(Vertex from, Vertex to) {
+        Edge previous = null;
+        Edge current = from.neighbours;
+        while (current != null) {
+            if (current.destination == to) {
+                if (previous == null) {
+                    from.neighbours = current.next;
+                } else {
+                    previous.next = current.next;
+                }
+                if (from.lastNeighbour == current) {
+                    from.lastNeighbour = previous;
+                }
+                return true;
+            }
+            previous = current;
+            current = current.next;
+        }
+        return false;
+    }
+
     private void appendEdge(Vertex from, Vertex to) {
         Edge edge = new Edge(to);
         if (from.neighbours == null) {
